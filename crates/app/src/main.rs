@@ -29,20 +29,7 @@ fn main() -> glib::ExitCode {
             win.set_anchor(edge, true);
         }
 
-        let clock = Label::new(None);
-        clock.add_css_class("clock");
-        let update = {
-            let clock = clock.clone();
-            move || {
-                let now = glib::DateTime::now_local().unwrap();
-                clock.set_text(&now.format("%H:%M").unwrap());
-            }
-        };
-        update();
-        glib::timeout_add_seconds_local(1, move || {
-            update();
-            glib::ControlFlow::Continue
-        });
+        let clock = ui::clock::widget();
 
         let bar = CenterBox::new();
         bar.add_css_class("bar-inner");

@@ -34,9 +34,7 @@ fn main() -> glib::ExitCode {
         let bar = CenterBox::new();
         bar.add_css_class("bar-inner");
         let left = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
-        left.append(&ui::launcher::button(|| {
-            eprintln!("launcher: belum diimplementasi");
-        }));
+        left.append(&ui::launcher::button());
         left.append(&ui::tags::widget(mango::watch(), mango::view_tag));
         bar.set_start_widget(Some(&left));
         bar.set_center_widget(Some(&clock));

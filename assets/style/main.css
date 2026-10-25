@@ -8,3 +8,37 @@ centerbox.bar-inner {
 .clock {
     font-weight: 600;
 }
+
+.tags .tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    opacity: 0.4;
+}
+.tags .tag { cursor: pointer; }
+.tags .tag:hover { background: rgba(255, 255, 255, 0.1); }
+
+.launcher {
+    padding: 2px 8px;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 6px;
+}
+.launcher:hover { background: rgba(255, 255, 255, 0.12); }
+
+.tags .tag.occupied { opacity: 0.8; }
+.tags .tag.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+}
+.tags .tag.urgent {
+    opacity: 1;
+    background: #e5484d;
+}
+
+.status {
+    padding: 2px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.status:hover { background: rgba(255, 255, 255, 0.1); }

@@ -33,9 +33,21 @@ fn main() -> glib::ExitCode {
 
         let bar = CenterBox::new();
         bar.add_css_class("bar-inner");
-        bar.set_start_widget(Some(&Label::new(Some("kiri"))));
+        let left = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+        left.append(&ui::launcher::button(|| {
+            eprintln!("launcher: belum diimplementasi");
+        }));
+        left.append(&ui::tags::widget(mango::watch(), mango::view_tag));
+        bar.set_start_widget(Some(&left));
         bar.set_center_widget(Some(&clock));
-        bar.set_end_widget(Some(&Label::new(Some("kanan"))));
+        bar.set_end_widget(Some(&ui::status::widget(
+            &[
+                ui::status::Item::Network,
+                ui::status::Item::Volume,
+                ui::status::Item::Battery,
+            ],
+            || eprintln!("control center: belum diimplementasi"),
+        )));
 
         win.set_child(Some(&bar));
         win.present();

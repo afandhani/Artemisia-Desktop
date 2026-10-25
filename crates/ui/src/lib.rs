@@ -14,3 +14,9 @@ mod tests {
 }
 
 pub mod clock;
+
+pub mod tags;
+
+pub mod launcher;
+
+pub mod status;

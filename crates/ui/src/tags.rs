@@ -43,7 +43,7 @@ fn render(container: &GtkBox, state: &TagsState, on_click: &Rc<dyn Fn(u8)>) {
         let index = tag.index;
         let cb = on_click.clone();
         let gesture = GestureClick::new();
-        gesture.connect_released(move |_, _, _, _| cb(index));
+        gesture.connect_pressed(move |_, _, _, _| cb(index));
         label.add_controller(gesture);
 
         container.append(&label);

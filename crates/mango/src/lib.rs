@@ -62,10 +62,13 @@ pub fn watch() -> Receiver<TagsState> {
     let (tx, rx) = async_channel::unbounded();
 
     std::thread::spawn(move || {
+        let mut last: Option<TagsState> = None;
+
         if let Some(state) = fetch() {
-            if tx.send_blocking(state).is_err() {
+            if tx.send_blocking(state.clone()).is_err() {
                 return;
             }
+            last = Some(state);
         }
 
         let mut child = match Command::new("mmsg")
@@ -89,9 +92,13 @@ pub fn watch() -> Receiver<TagsState> {
             match serde_json::from_value::<RawAll>(value.clone()) {
                 Ok(raw) => {
                     if let Some(state) = convert(raw) {
-                        if tx.send_blocking(state).is_err() {
+                        if last.as_ref() == Some(&state) {
+                            continue;
+                        }
+                        if tx.send_blocking(state.clone()).is_err() {
                             break;
                         }
+                        last = Some(state);
                     }
                 }
                 Err(e) => eprintln!("mango: format tidak dikenal ({e}): {value}"),
@@ -106,8 +113,9 @@ pub fn watch() -> Receiver<TagsState> {
 /// Pindah ke tag tertentu (1-9).
 pub fn view_tag(index: u8) {
     std::thread::spawn(move || {
-        let _ = Command::new("mmsg")
+        let out = Command::new("mmsg")
         .args(["dispatch", &format!("view,{index}")])
-        .status();
+        .output();
+        eprintln!("mango: view,{index} -> {out:?}");
     });
 }

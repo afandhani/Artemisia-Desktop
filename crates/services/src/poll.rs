@@ -22,3 +22,17 @@ T: Clone + PartialEq + Send + 'static,
     });
     rx
 }
+
+/// Thread pekerja: menerima nilai, hanya mengeksekusi yang terbaru.
+pub(crate) fn worker(f: impl Fn(u8) + Send + 'static) -> std::sync::mpsc::Sender<u8> {
+    let (tx, rx) = std::sync::mpsc::channel::<u8>();
+    std::thread::spawn(move || {
+        while let Ok(mut v) = rx.recv() {
+            while let Ok(newer) = rx.try_recv() {
+                v = newer;
+            }
+            f(v);
+        }
+    });
+    tx
+}

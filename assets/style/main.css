@@ -59,3 +59,32 @@ popover > contents {
 .launcher-app:hover {
     background: rgba(255, 255, 255, 0.1);
 }
+
+window.catcher { background: transparent; }
+window.control-center {
+    background: rgba(20, 20, 28, 0.97);
+    color: #e6e6f0;
+    border-radius: 12px;
+}
+.cc-box { padding: 14px; }
+.cc-title { font-weight: 600; }
+
+.launcher-search {
+    margin-top: 4px;
+    min-width: 240px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e6e6f0;
+}
+
+.cc-dim { opacity: 0.6; }
+.wifi-ap, .bt-device {
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.wifi-ap:hover, .bt-device:hover { background: rgba(255, 255, 255, 0.1); }
+.wifi-ap.active, .bt-device.connected {
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+}

@@ -1,11 +1,13 @@
 use gtk4::gio::{self, prelude::*, AppInfo};
 use gtk4::prelude::*;
 use gtk4::{
-    ArrowType, Box as GtkBox, Button, Image, Label, MenuButton, Orientation, Popover,
+    ArrowType, Box as GtkBox, Button, Entry, Image, Label, MenuButton, Orientation, Popover,
     ScrolledWindow,
 };
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Group {
@@ -36,7 +38,6 @@ impl Group {
     }
 }
 
-// Ubah urutan/aturan di sini kalau ingin pengelompokan lain.
 fn group_for(categories: &str) -> Group {
     let has = |c: &str| categories.split(';').any(|x| x == c);
     if has("Game") {
@@ -58,24 +59,6 @@ fn group_for(categories: &str) -> Group {
     } else {
         Group::Other
     }
-}
-
-pub fn button() -> MenuButton {
-    let menu = MenuButton::new();
-    menu.set_label("☰");
-    menu.set_has_frame(false);
-    menu.add_css_class("launcher");
-
-    let popover = Popover::new();
-    popover.set_has_arrow(false);
-    let list = GtkBox::new(Orientation::Vertical, 2);
-    popover.set_child(Some(&list));
-    menu.set_popover(Some(&popover));
-
-    // Bangun ulang tiap menu dibuka, supaya daftar aplikasi selalu segar.
-    popover.connect_show(move |p| fill(&list, p));
-
-    menu
 }
 
 fn data_dirs() -> Vec<PathBuf> {
@@ -116,18 +99,134 @@ fn categories_of(app: &AppInfo) -> String {
     String::new()
 }
 
-fn fill(list: &GtkBox, main: &Popover) {
-    while let Some(child) = list.first_child() {
-        list.remove(&child);
+fn visible_apps() -> Vec<AppInfo> {
+    AppInfo::all()
+    .into_iter()
+    .filter(|a| a.should_show())
+    .collect()
+}
+
+fn clear(b: &GtkBox) {
+    while let Some(child) = b.first_child() {
+        b.remove(&child);
+    }
+}
+
+fn launch(app: &AppInfo) {
+    if let Err(e) = app.launch(&[], None::<&gio::AppLaunchContext>) {
+        eprintln!("launcher: gagal membuka {}: {e}", app.name());
+    }
+}
+
+// Hasil pencarian: nama yang diawali kata kunci dulu, lalu yang mengandungnya.
+fn search(apps: &[AppInfo], query: &str) -> Vec<AppInfo> {
+    let mut hits: Vec<(bool, String, AppInfo)> = apps
+    .iter()
+    .filter_map(|a| {
+        let name = a.name().to_lowercase();
+        name.contains(query)
+        .then(|| (!name.starts_with(query), name, a.clone()))
+    })
+    .collect();
+    hits.sort_by(|a, b| (a.0, &a.1).cmp(&(b.0, &b.1)));
+    hits.into_iter().take(8).map(|(_, _, a)| a).collect()
+}
+
+pub fn button() -> MenuButton {
+    let menu = MenuButton::new();
+    menu.set_label("☰");
+    menu.set_has_frame(false);
+    menu.add_css_class("launcher");
+
+    let popover = Popover::new();
+    popover.set_has_arrow(false);
+
+    let root = GtkBox::new(Orientation::Vertical, 6);
+    let categories = GtkBox::new(Orientation::Vertical, 2);
+    let results = GtkBox::new(Orientation::Vertical, 2);
+    results.set_visible(false);
+
+    let entry = Entry::new();
+    entry.set_placeholder_text(Some("Cari aplikasi..."));
+    entry.add_css_class("launcher-search");
+
+    root.append(&categories);
+    root.append(&results);
+    root.append(&entry);
+    popover.set_child(Some(&root));
+    menu.set_popover(Some(&popover));
+
+    // Daftar aplikasi dibaca ulang tiap menu dibuka.
+    let apps: Rc<RefCell<Vec<AppInfo>>> = Rc::new(RefCell::new(Vec::new()));
+
+    {
+        let apps = apps.clone();
+        let categories = categories.clone();
+        let results = results.clone();
+        let entry = entry.clone();
+        popover.connect_show(move |p| {
+            entry.set_text("");
+            *apps.borrow_mut() = visible_apps();
+            fill_categories(&categories, &apps.borrow(), p);
+            results.set_visible(false);
+            categories.set_visible(true);
+            entry.grab_focus();
+        });
     }
 
+    {
+        let apps = apps.clone();
+        let categories = categories.clone();
+        let results = results.clone();
+        let main = popover.downgrade();
+        entry.connect_changed(move |e| {
+            let query = e.text().to_lowercase();
+            clear(&results);
+            if query.is_empty() {
+                results.set_visible(false);
+                categories.set_visible(true);
+                return;
+            }
+            categories.set_visible(false);
+            results.set_visible(true);
+            let Some(main) = main.upgrade() else { return };
+            for app in search(&apps.borrow(), &query) {
+                results.append(&app_button(&app, &main));
+            }
+        });
+    }
+
+    {
+        // Enter: buka hasil pertama.
+        let apps = apps.clone();
+        let main = popover.downgrade();
+        entry.connect_activate(move |e| {
+            let query = e.text().to_lowercase();
+            if query.is_empty() {
+                return;
+            }
+            if let Some(app) = search(&apps.borrow(), &query).first() {
+                launch(app);
+                if let Some(p) = main.upgrade() {
+                    p.popdown();
+                }
+            }
+        });
+    }
+
+    menu
+}
+
+fn fill_categories(list: &GtkBox, apps: &[AppInfo], main: &Popover) {
+    clear(list);
+
     let mut groups: BTreeMap<Group, Vec<AppInfo>> = BTreeMap::new();
-    for app in AppInfo::all() {
-        if !app.should_show() {
-            continue;
-        }
-        let categories = categories_of(&app);
-        groups.entry(group_for(&categories)).or_default().push(app);
+    for app in apps {
+        let categories = categories_of(app);
+        groups
+        .entry(group_for(&categories))
+        .or_default()
+        .push(app.clone());
     }
 
     for (group, mut apps) in groups {
@@ -181,9 +280,7 @@ fn app_button(app: &AppInfo, main: &Popover) -> Button {
     let app = app.clone();
     let main = main.downgrade();
     btn.connect_clicked(move |_| {
-        if let Err(e) = app.launch(&[], None::<&gio::AppLaunchContext>) {
-            eprintln!("launcher: gagal membuka {}: {e}", app.name());
-        }
+        launch(&app);
         if let Some(p) = main.upgrade() {
             p.popdown();
         }

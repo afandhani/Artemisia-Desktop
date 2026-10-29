@@ -1,6 +1,7 @@
-use crate::poll::poll;
+use crate::poll::{poll, worker};
 use async_channel::Receiver;
 use std::process::Command;
+use std::sync::{mpsc::Sender, OnceLock};
 use std::time::Duration;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -18,7 +19,6 @@ fn pactl(args: &[&str]) -> Option<String> {
 }
 
 fn read() -> Option<VolumeState> {
-    // contoh: "Volume: front-left: 32768 /  50% / -18.06 dB, front-right: ..."
     let vol = pactl(&["get-sink-volume", "@DEFAULT_SINK@"])?;
     let percent = vol
     .split_whitespace()
@@ -26,7 +26,6 @@ fn read() -> Option<VolumeState> {
     .trim_end_matches('%')
     .parse()
     .ok()?;
-    // contoh: "Mute: no"
     let muted = pactl(&["get-sink-mute", "@DEFAULT_SINK@"])
     .map_or(false, |m| m.contains("yes"));
     Some(VolumeState { percent, muted })
@@ -34,4 +33,25 @@ fn read() -> Option<VolumeState> {
 
 pub fn watch() -> Receiver<VolumeState> {
     poll(Duration::from_secs(1), read)
+}
+
+static SETTER: OnceLock<Sender<u8>> = OnceLock::new();
+
+pub fn set(percent: u8) {
+    let tx = SETTER.get_or_init(|| {
+        worker(|p| {
+            let _ = Command::new("pactl")
+            .args(["set-sink-volume", "@DEFAULT_SINK@", &format!("{p}%")])
+            .status();
+        })
+    });
+    let _ = tx.send(percent.min(100));
+}
+
+pub fn toggle_mute() {
+    std::thread::spawn(|| {
+        let _ = Command::new("pactl")
+        .args(["set-sink-mute", "@DEFAULT_SINK@", "toggle"])
+        .status();
+    });
 }

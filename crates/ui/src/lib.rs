@@ -1,22 +1,9 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
-
 pub mod clock;
-
+pub mod control_center;
+pub mod launcher;
+pub mod status;
 pub mod tags;
 
-pub mod launcher;
-
-pub mod status;
+mod bluetooth_panel;
+mod panel_util;
+mod wifi_panel;

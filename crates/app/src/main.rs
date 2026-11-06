@@ -20,10 +20,14 @@ fn load_css() {
 
 fn main() -> glib::ExitCode {
     // 1. Load configuration
-    let config = config::load().unwrap_or_else(|error| {
-        eprintln!("Failed to load Artemisia config: {error}");
-        std::process::exit(1);
-    });
+    let config = match config::load() {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("\n[Artemisia] Failed to load configuration:\n{error}\n");
+
+            std::process::exit(1);
+        }
+    };
 
     // 2. Convert config into ShellPlan
     let plan = Rc::new(artemisia_core::ShellPlan::from(&config));
@@ -33,7 +37,7 @@ fn main() -> glib::ExitCode {
         .application_id("dev.artemisia.bar")
         .build();
 
-    let shell_plan = plan.clone();
+    let shell_plan = artemisia_core::ShellPlan::from(&config);
 
     app.connect_activate(move |app| {
         load_css();

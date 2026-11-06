@@ -12,3 +12,4 @@ services.workspace = true
 ui.workspace = true
 config.workspace = true
 artemisia-core.workspace = true
+artemisia-config-watcher = { path = "../config-watcher" }

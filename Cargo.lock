@@ -15,6 +15,7 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "artemisia-config-watcher",
  "artemisia-core",
  "config",
  "gtk4",

@@ -5,7 +5,7 @@ center = ["clock"]
 right  = ["status"]
 
 [clock]
-format = "%H:%M"
+format = "%H:%M:%S"
 
 [status]
 items = ["network", "volume", "battery"]

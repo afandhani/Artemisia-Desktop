@@ -5,11 +5,14 @@ use std::{
     fs,
     path::PathBuf,
     sync::mpsc::{self, Receiver, TryRecvError},
+    time::{Duration, Instant},
 };
 
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 
 use config::Config;
+
+const DEBOUNCE_DURATION: Duration = Duration::from_millis(250);
 
 pub struct ConfigWatcher {
     // Harus tetap hidup agar watcher terus memantau file.
@@ -20,6 +23,9 @@ pub struct ConfigWatcher {
 
     // Lokasi config.toml.
     path: PathBuf,
+
+    // Waktu event relevan terakhir diterima.
+    pending_since: Option<Instant>,
 }
 
 impl ConfigWatcher {
@@ -28,7 +34,6 @@ impl ConfigWatcher {
 
         let parent = path.parent().ok_or("Config path has no parent directory")?;
 
-        // Pastikan direktori konfigurasi tersedia.
         fs::create_dir_all(parent)?;
 
         let (sender, receiver) = mpsc::channel();
@@ -40,25 +45,23 @@ impl ConfigWatcher {
             notify::Config::default(),
         )?;
 
-        // Pantau direktori, bukan hanya file.
-        // Ini juga membantu mendeteksi atomic file replacement.
+        // Pantau direktori agar atomic file replacement terdeteksi.
         watcher.watch(parent, RecursiveMode::NonRecursive)?;
 
         Ok(Self {
             _watcher: watcher,
             receiver,
             path,
+            pending_since: None,
         })
     }
 
-    /// Periksa event filesystem dan muat ulang config jika berubah.
+    /// Memeriksa event dan memuat ulang konfigurasi setelah debounce.
     ///
     /// Ok(Some(config)) = konfigurasi baru berhasil dimuat.
-    /// Ok(None)         = belum ada perubahan relevan.
+    /// Ok(None)         = belum waktunya reload atau tidak ada perubahan.
     /// Err(error)       = event atau konfigurasi mengalami masalah.
-    pub fn poll(&self) -> Result<Option<Config>, Box<dyn Error>> {
-        let mut changed = false;
-
+    pub fn poll(&mut self) -> Result<Option<Config>, Box<dyn Error>> {
         loop {
             match self.receiver.try_recv() {
                 Ok(Ok(event)) => {
@@ -73,7 +76,8 @@ impl ConfigWatcher {
                         .any(|event_path| event_path == &self.path);
 
                     if relevant_kind && relevant_path {
-                        changed = true;
+                        // Reset debounce setiap ada perubahan relevan.
+                        self.pending_since = Some(Instant::now());
                     }
                 }
 
@@ -89,12 +93,20 @@ impl ConfigWatcher {
             }
         }
 
-        if !changed {
+        let ready = self
+            .pending_since
+            .map(|since| since.elapsed() >= DEBOUNCE_DURATION)
+            .unwrap_or(false);
+
+        if !ready {
             return Ok(None);
         }
 
-        // Config::load() sudah melakukan parsing, merge, dan validation.
-        let config: Config = config::load()?;
+        // Reset sebelum reload agar error tidak memicu percobaan berulang.
+        self.pending_since = None;
+
+        // Parsing, merging, dan validation dilakukan oleh config crate.
+        let config = config::load()?;
 
         Ok(Some(config))
     }

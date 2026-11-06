@@ -30,7 +30,7 @@ fn main() -> glib::ExitCode {
     };
 
     // 2. Convert config into ShellPlan
-    let plan = Rc::new(artemisia_core::ShellPlan::from(&config));
+    //let plan = Rc::new(artemisia_core::ShellPlan::from(&config));
 
     // 3. Create GTK application
     let app = Application::builder()

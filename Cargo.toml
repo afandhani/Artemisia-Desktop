@@ -25,3 +25,5 @@ services = { path = "crates/services" }
 ui = { path = "crates/ui" }
 config = { path = "crates/config" }
 artemisia-core = { path = "crates/core" }
+
+notify = "8"

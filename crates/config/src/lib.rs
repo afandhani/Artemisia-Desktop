@@ -21,7 +21,7 @@ pub struct Bar {
     pub right: Vec<Widget>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Position {
     Top,
@@ -29,7 +29,7 @@ pub enum Position {
 }
 
 // nama widget yang boleh muncul di bar; nilai lain = error otomatis
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Widget {
     Launcher,
@@ -50,7 +50,7 @@ pub struct Status {
     pub items: Vec<StatusItem>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusItem {
     Network,

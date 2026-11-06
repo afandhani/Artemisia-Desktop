@@ -1,0 +1,7 @@
+[package]
+name = "artemisia-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+config = { path = "../config" }

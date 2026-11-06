@@ -17,6 +17,7 @@ async-channel = "2.5.0"
 chrono = "0.4.45"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
+toml = "1.1.8"
 
 # crate internal
 mango = { path = "crates/mango" }

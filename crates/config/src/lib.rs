@@ -126,14 +126,118 @@ fn merge(base: &mut toml::Table, over: toml::Table) {
 impl Config {
     fn validate(&self) -> Result<(), ConfigError> {
         let total = self.bar.left.len() + self.bar.center.len() + self.bar.right.len();
+
+        // Minimal harus ada satu widget di panel.
         if total == 0 {
             return Err(ConfigError::Rule("[bar] tidak boleh kosong semua".into()));
         }
-        if self.status.items.is_empty() && self.bar.right.contains(&Widget::Status) {
+
+        // Periksa apakah widget clock digunakan di salah satu slot.
+        let clock_used = self.bar.left.contains(&Widget::Clock)
+            || self.bar.center.contains(&Widget::Clock)
+            || self.bar.right.contains(&Widget::Clock);
+
+        if clock_used && self.clock.format.trim().is_empty() {
             return Err(ConfigError::Rule(
-                "widget \"status\" dipakai tapi [status].items kosong".into(),
+                "widget \"clock\" digunakan tapi [clock].format kosong".into(),
             ));
         }
+
+        // Periksa apakah widget status digunakan di salah satu slot.
+        let status_used = self.bar.left.contains(&Widget::Status)
+            || self.bar.center.contains(&Widget::Status)
+            || self.bar.right.contains(&Widget::Status);
+
+        if status_used && self.status.items.is_empty() {
+            return Err(ConfigError::Rule(
+                "widget \"status\" digunakan tapi [status].items kosong".into(),
+            ));
+        }
+
+        // Hindari status item yang sama muncul berulang.
+        for (index, item) in self.status.items.iter().enumerate() {
+            if self.status.items[..index].contains(item) {
+                return Err(ConfigError::Rule(format!(
+                    "status item \"{item:?}\" digunakan lebih dari sekali"
+                )));
+            }
+        }
+
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_config() -> Config {
+        Config {
+            bar: Bar {
+                position: Position::Top,
+                left: vec![Widget::Launcher, Widget::Tags],
+                center: vec![Widget::Clock],
+                right: vec![Widget::Status],
+            },
+            clock: Clock {
+                format: "%H:%M".into(),
+            },
+            status: Status {
+                items: vec![StatusItem::Network, StatusItem::Volume, StatusItem::Battery],
+            },
+        }
+    }
+
+    #[test]
+    fn accepts_valid_config() {
+        let config = sample_config();
+        assert!(config.validate().is_ok());
+    }
+
+    #[test]
+    fn rejects_empty_bar() {
+        let mut config = sample_config();
+
+        config.bar.left.clear();
+        config.bar.center.clear();
+        config.bar.right.clear();
+
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn rejects_empty_clock_format_when_clock_is_used() {
+        let mut config = sample_config();
+        config.clock.format.clear();
+
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn rejects_empty_status_items_when_status_is_used() {
+        let mut config = sample_config();
+        config.status.items.clear();
+
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn checks_status_widget_in_center_slot() {
+        let mut config = sample_config();
+
+        config.bar.right.clear();
+        config.bar.center = vec![Widget::Status];
+        config.status.items.clear();
+
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn rejects_duplicate_status_items() {
+        let mut config = sample_config();
+
+        config.status.items = vec![StatusItem::Network, StatusItem::Network];
+
+        assert!(config.validate().is_err());
     }
 }

@@ -1,4 +1,4 @@
-use gtk4::gio::{self, prelude::*, AppInfo};
+use gtk4::gio::{self, AppInfo, prelude::*};
 use gtk4::prelude::*;
 use gtk4::{
     ArrowType, Box as GtkBox, Button, Entry, Image, Label, MenuButton, Orientation, Popover,
@@ -90,10 +90,10 @@ fn categories_of(app: &AppInfo) -> String {
         let path = dir.join("applications").join(id.as_str());
         if let Ok(text) = std::fs::read_to_string(path) {
             return text
-            .lines()
-            .find_map(|l| l.strip_prefix("Categories="))
-            .unwrap_or("")
-            .to_string();
+                .lines()
+                .find_map(|l| l.strip_prefix("Categories="))
+                .unwrap_or("")
+                .to_string();
         }
     }
     String::new()
@@ -101,9 +101,9 @@ fn categories_of(app: &AppInfo) -> String {
 
 fn visible_apps() -> Vec<AppInfo> {
     AppInfo::all()
-    .into_iter()
-    .filter(|a| a.should_show())
-    .collect()
+        .into_iter()
+        .filter(|a| a.should_show())
+        .collect()
 }
 
 fn clear(b: &GtkBox) {
@@ -121,13 +121,13 @@ fn launch(app: &AppInfo) {
 // Hasil pencarian: nama yang diawali kata kunci dulu, lalu yang mengandungnya.
 fn search(apps: &[AppInfo], query: &str) -> Vec<AppInfo> {
     let mut hits: Vec<(bool, String, AppInfo)> = apps
-    .iter()
-    .filter_map(|a| {
-        let name = a.name().to_lowercase();
-        name.contains(query)
-        .then(|| (!name.starts_with(query), name, a.clone()))
-    })
-    .collect();
+        .iter()
+        .filter_map(|a| {
+            let name = a.name().to_lowercase();
+            name.contains(query)
+                .then(|| (!name.starts_with(query), name, a.clone()))
+        })
+        .collect();
     hits.sort_by(|a, b| (a.0, &a.1).cmp(&(b.0, &b.1)));
     hits.into_iter().take(8).map(|(_, _, a)| a).collect()
 }
@@ -224,9 +224,9 @@ fn fill_categories(list: &GtkBox, apps: &[AppInfo], main: &Popover) {
     for app in apps {
         let categories = categories_of(app);
         groups
-        .entry(group_for(&categories))
-        .or_default()
-        .push(app.clone());
+            .entry(group_for(&categories))
+            .or_default()
+            .push(app.clone());
     }
 
     for (group, mut apps) in groups {

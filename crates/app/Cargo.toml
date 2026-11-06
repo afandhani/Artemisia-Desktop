@@ -8,4 +8,7 @@ edition.workspace = true
 gtk4.workspace = true
 gtk4-layer-shell.workspace = true
 mango.workspace = true
+services.workspace = true
 ui.workspace = true
+config.workspace = true
+artemisia-core.workspace = true

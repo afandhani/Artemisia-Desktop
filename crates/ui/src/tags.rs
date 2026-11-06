@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use gtk4::{glib, Box as GtkBox, GestureClick, Label, Orientation};
+use gtk4::{Box as GtkBox, GestureClick, Label, Orientation, glib};
 use mango::{Receiver, TagsState};
 use std::rc::Rc;
 

@@ -34,8 +34,8 @@ pub fn header(title: &str) -> (GtkBox, Switch) {
 /// Saklar yang dipengaruhi user dan service tanpa saling menimpa.
 pub struct SwitchSync {
     switch: Switch,
-        updating: Rc<Cell<bool>>,
-        last_user: Rc<Cell<Option<Instant>>>,
+    updating: Rc<Cell<bool>>,
+    last_user: Rc<Cell<Option<Instant>>>,
 }
 
 impl SwitchSync {
@@ -53,15 +53,19 @@ impl SwitchSync {
                 on_toggle(s.is_active());
             });
         }
-        Self { switch: switch.clone(), updating, last_user }
+        Self {
+            switch: switch.clone(),
+            updating,
+            last_user,
+        }
     }
 
     /// Ikuti nilai dari service, kecuali user baru saja menyentuhnya.
     pub fn sync(&self, value: bool) {
         let touched = self
-        .last_user
-        .get()
-        .map_or(false, |t| t.elapsed() < Duration::from_secs(3));
+            .last_user
+            .get()
+            .map_or(false, |t| t.elapsed() < Duration::from_secs(3));
         if touched || self.switch.is_active() == value {
             return;
         }

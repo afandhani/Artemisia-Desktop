@@ -39,20 +39,23 @@ fn convert(raw: RawAll) -> Option<TagsState> {
     // sementara: monitor pertama saja
     let mon = raw.all_tags.into_iter().next()?;
     let tags = mon
-    .tags
-    .into_iter()
-    .map(|t| Tag {
-        index: t.index,
-         active: t.is_active,
-         urgent: t.is_urgent,
-         occupied: t.client_count > 0,
-    })
-    .collect();
+        .tags
+        .into_iter()
+        .map(|t| Tag {
+            index: t.index,
+            active: t.is_active,
+            urgent: t.is_urgent,
+            occupied: t.client_count > 0,
+        })
+        .collect();
     Some(TagsState { tags })
 }
 
 fn fetch() -> Option<TagsState> {
-    let out = Command::new("mmsg").args(["get", "all-tags"]).output().ok()?;
+    let out = Command::new("mmsg")
+        .args(["get", "all-tags"])
+        .output()
+        .ok()?;
     let raw: RawAll = serde_json::from_slice(&out.stdout).ok()?;
     convert(raw)
 }
@@ -72,20 +75,20 @@ pub fn watch() -> Receiver<TagsState> {
         }
 
         let mut child = match Command::new("mmsg")
-        .args(["watch", "all-tags"])
-        .stdout(Stdio::piped())
-        .spawn()
+            .args(["watch", "all-tags"])
+            .stdout(Stdio::piped())
+            .spawn()
         {
             Ok(c) => c,
-                       Err(e) => {
-                           eprintln!("mango: gagal menjalankan mmsg: {e}");
-                           return;
-                       }
+            Err(e) => {
+                eprintln!("mango: gagal menjalankan mmsg: {e}");
+                return;
+            }
         };
 
         let stdout = child.stdout.take().expect("stdout piped");
         let stream = serde_json::Deserializer::from_reader(BufReader::new(stdout))
-        .into_iter::<serde_json::Value>();
+            .into_iter::<serde_json::Value>();
 
         for value in stream {
             let Ok(value) = value else { break };
@@ -114,8 +117,8 @@ pub fn watch() -> Receiver<TagsState> {
 pub fn view_tag(index: u8) {
     std::thread::spawn(move || {
         let out = Command::new("mmsg")
-        .args(["dispatch", &format!("view,{index}")])
-        .output();
+            .args(["dispatch", &format!("view,{index}")])
+            .output();
         eprintln!("mango: view,{index} -> {out:?}");
     });
 }

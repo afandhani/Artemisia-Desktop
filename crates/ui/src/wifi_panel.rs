@@ -1,6 +1,6 @@
-use crate::panel_util::{clear, dim, header, SwitchSync};
+use crate::panel_util::{SwitchSync, clear, dim, header};
 use gtk4::prelude::*;
-use gtk4::{glib, Box as GtkBox, Button, Entry, Label, Orientation, ScrolledWindow};
+use gtk4::{Box as GtkBox, Button, Entry, Label, Orientation, ScrolledWindow, glib};
 use services::network::{self, WifiList};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -62,9 +62,9 @@ pub fn widget() -> GtkBox {
 
     let prompt = Rc::new(Prompt {
         row: prompt_box.clone(),
-                         label: prompt_label,
-                         entry: entry.clone(),
-                         pending: RefCell::new(None),
+        label: prompt_label,
+        entry: entry.clone(),
+        pending: RefCell::new(None),
     });
     {
         let p = prompt.clone();

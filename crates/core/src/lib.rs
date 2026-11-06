@@ -4,7 +4,8 @@
 //! the loaded desktop configuration into a UI-independent shell plan. The app
 //! crate can later pass that plan to the GTK UI layer and compositor adapter.
 
-use config::{Config, Position, StatusItem, Widget};
+use config::Config;
+pub use config::{Position, StatusItem, Widget};
 
 /// The horizontal region in which a panel module should be placed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -39,18 +40,39 @@ impl From<&Config> for ShellPlan {
             config.bar.left.len() + config.bar.center.len() + config.bar.right.len(),
         );
 
-        modules.extend(config.bar.left.iter().copied().map(|widget| ModulePlacement {
-            widget,
-            slot: Slot::Start,
-        }));
-        modules.extend(config.bar.center.iter().copied().map(|widget| ModulePlacement {
-            widget,
-            slot: Slot::Center,
-        }));
-        modules.extend(config.bar.right.iter().copied().map(|widget| ModulePlacement {
-            widget,
-            slot: Slot::End,
-        }));
+        modules.extend(
+            config
+                .bar
+                .left
+                .iter()
+                .copied()
+                .map(|widget| ModulePlacement {
+                    widget,
+                    slot: Slot::Start,
+                }),
+        );
+        modules.extend(
+            config
+                .bar
+                .center
+                .iter()
+                .copied()
+                .map(|widget| ModulePlacement {
+                    widget,
+                    slot: Slot::Center,
+                }),
+        );
+        modules.extend(
+            config
+                .bar
+                .right
+                .iter()
+                .copied()
+                .map(|widget| ModulePlacement {
+                    widget,
+                    slot: Slot::End,
+                }),
+        );
 
         Self {
             position: config.bar.position,
@@ -91,6 +113,9 @@ mod tests {
         assert_eq!(plan.modules[2].slot, Slot::Center);
         assert_eq!(plan.modules[3].slot, Slot::End);
         assert_eq!(plan.clock_format, "%H:%M");
-        assert_eq!(plan.status_items, vec![StatusItem::Network, StatusItem::Volume]);
+        assert_eq!(
+            plan.status_items,
+            vec![StatusItem::Network, StatusItem::Volume]
+        );
     }
 }

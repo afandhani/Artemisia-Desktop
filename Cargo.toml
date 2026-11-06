@@ -23,3 +23,5 @@ toml = "1.1.8"
 mango = { path = "crates/mango" }
 services = { path = "crates/services" }
 ui = { path = "crates/ui" }
+config = { path = "crates/config" }
+artemisia-core = { path = "crates/core" }

@@ -1,7 +1,7 @@
 use crate::poll::{poll, worker};
 use async_channel::Receiver;
 use std::process::Command;
-use std::sync::{mpsc::Sender, OnceLock};
+use std::sync::{OnceLock, mpsc::Sender};
 use std::time::Duration;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -11,22 +11,22 @@ pub struct BrightnessState {
 
 fn read() -> Option<BrightnessState> {
     let out = Command::new("brightnessctl")
-    .args(["-c", "backlight", "-m"])
-    .output()
-    .ok()?;
+        .args(["-c", "backlight", "-m"])
+        .output()
+        .ok()?;
     if !out.status.success() {
         return None;
     }
     let text = String::from_utf8_lossy(&out.stdout);
     // contoh: "intel_backlight,backlight,12000,50%,24000"
     let percent = text
-    .lines()
-    .next()?
-    .split(',')
-    .nth(3)?
-    .trim_end_matches('%')
-    .parse()
-    .ok()?;
+        .lines()
+        .next()?
+        .split(',')
+        .nth(3)?
+        .trim_end_matches('%')
+        .parse()
+        .ok()?;
     Some(BrightnessState { percent })
 }
 
@@ -40,8 +40,8 @@ pub fn set(percent: u8) {
     let tx = SETTER.get_or_init(|| {
         worker(|p| {
             let _ = Command::new("brightnessctl")
-            .args(["-c", "backlight", "set", &format!("{p}%")])
-            .status();
+                .args(["-c", "backlight", "set", &format!("{p}%")])
+                .status();
         })
     });
     // minimal 1% supaya layar tidak mati total

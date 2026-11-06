@@ -28,16 +28,20 @@ fn ctl(args: &[&str]) -> Option<String> {
 // Baris: "Device AA:BB:CC:DD:EE:FF Nama Perangkat"
 fn parse_devices(text: &str) -> Vec<(String, String)> {
     text.lines()
-    .filter_map(|l| {
-        let rest = l.trim().strip_prefix("Device ")?;
-        let (mac, name) = rest.split_once(' ')?;
-        Some((mac.to_string(), name.trim().to_string()))
-    })
-    .collect()
+        .filter_map(|l| {
+            let rest = l.trim().strip_prefix("Device ")?;
+            let (mac, name) = rest.split_once(' ')?;
+            Some((mac.to_string(), name.trim().to_string()))
+        })
+        .collect()
 }
 
 fn read() -> Option<BtState> {
-    let unavailable = BtState { available: false, powered: false, devices: vec![] };
+    let unavailable = BtState {
+        available: false,
+        powered: false,
+        devices: vec![],
+    };
 
     let Some(show) = ctl(&["show"]) else {
         return Some(unavailable);
@@ -48,21 +52,26 @@ fn read() -> Option<BtState> {
     let powered = show.lines().any(|l| l.trim() == "Powered: yes");
 
     let connected: Vec<String> = parse_devices(&ctl(&["devices", "Connected"]).unwrap_or_default())
-    .into_iter()
-    .map(|(mac, _)| mac)
-    .collect();
+        .into_iter()
+        .map(|(mac, _)| mac)
+        .collect();
 
-    let mut devices: Vec<BtDevice> = parse_devices(&ctl(&["devices", "Paired"]).unwrap_or_default())
-    .into_iter()
-    .map(|(mac, name)| BtDevice {
-        connected: connected.contains(&mac),
-         mac,
-         name,
-    })
-    .collect();
+    let mut devices: Vec<BtDevice> =
+        parse_devices(&ctl(&["devices", "Paired"]).unwrap_or_default())
+            .into_iter()
+            .map(|(mac, name)| BtDevice {
+                connected: connected.contains(&mac),
+                mac,
+                name,
+            })
+            .collect();
     devices.sort_by(|a, b| b.connected.cmp(&a.connected).then(a.name.cmp(&b.name)));
 
-    Some(BtState { available: true, powered, devices })
+    Some(BtState {
+        available: true,
+        powered,
+        devices,
+    })
 }
 
 pub fn watch() -> Receiver<BtState> {

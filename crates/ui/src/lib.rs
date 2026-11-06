@@ -1,6 +1,7 @@
 pub mod clock;
 pub mod control_center;
 pub mod launcher;
+pub mod panel;
 pub mod status;
 pub mod tags;
 

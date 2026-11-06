@@ -1,10 +1,10 @@
 use gtk4::prelude::*;
 use gtk4::{
-    glib, Application, ApplicationWindow, Box as GtkBox, Button, GestureClick, Label,
-    Orientation, Scale, Separator,
+    Application, ApplicationWindow, Box as GtkBox, Button, GestureClick, Label, Orientation, Scale,
+    Separator, glib,
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use services::{brightness, volume, Receiver};
+use services::{Receiver, brightness, volume};
 use std::cell::Cell;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
@@ -78,8 +78,8 @@ fn content() -> GtkBox {
         "Volume",
         0.0,
         volume::watch(),
-                            |s| s.percent.min(100),
-                            volume::set,
+        |s| s.percent.min(100),
+        volume::set,
     ));
 
     let mute = Button::with_label("Mute / Unmute");
@@ -90,8 +90,8 @@ fn content() -> GtkBox {
         "Brightness",
         1.0,
         brightness::watch(),
-                            |s| s.percent,
-                            brightness::set,
+        |s| s.percent,
+        brightness::set,
     ));
 
     root.append(&Separator::new(Orientation::Horizontal));
@@ -107,7 +107,7 @@ fn slider_row<T: 'static>(
     min: f64,
     rx: Receiver<T>,
     to_percent: impl Fn(&T) -> u8 + 'static,
-                          on_change: impl Fn(u8) + 'static,
+    on_change: impl Fn(u8) + 'static,
 ) -> GtkBox {
     let row = GtkBox::new(Orientation::Vertical, 4);
     let label = Label::new(Some(title));
@@ -140,8 +140,8 @@ fn slider_row<T: 'static>(
         glib::MainContext::default().spawn_local(async move {
             while let Ok(state) = rx.recv().await {
                 let recently_touched = last_user
-                .get()
-                .map_or(false, |t| t.elapsed() < Duration::from_millis(1500));
+                    .get()
+                    .map_or(false, |t| t.elapsed() < Duration::from_millis(1500));
                 if recently_touched {
                     continue;
                 }

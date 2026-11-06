@@ -11,9 +11,18 @@ pub enum NetworkState {
 
 fn read() -> Option<NetworkState> {
     let out = Command::new("nmcli")
-    .args(["-t", "-f", "IN-USE,SIGNAL,SSID", "dev", "wifi", "list", "--rescan", "no"])
-    .output()
-    .ok()?;
+        .args([
+            "-t",
+            "-f",
+            "IN-USE,SIGNAL,SSID",
+            "dev",
+            "wifi",
+            "list",
+            "--rescan",
+            "no",
+        ])
+        .output()
+        .ok()?;
     let text = String::from_utf8_lossy(&out.stdout);
     for line in text.lines() {
         let mut parts = line.splitn(3, ':');
@@ -58,17 +67,28 @@ fn nmcli(args: &[&str]) -> Option<String> {
 fn read_list() -> Option<WifiList> {
     let enabled = nmcli(&["radio", "wifi"])?.trim() == "enabled";
     if !enabled {
-        return Some(WifiList { enabled, saved: vec![], aps: vec![] });
+        return Some(WifiList {
+            enabled,
+            saved: vec![],
+            aps: vec![],
+        });
     }
 
     let saved: Vec<String> = nmcli(&["-t", "-f", "NAME", "connection", "show"])
-    .unwrap_or_default()
-    .lines()
-    .map(|l| l.replace("\\:", ":"))
-    .collect();
+        .unwrap_or_default()
+        .lines()
+        .map(|l| l.replace("\\:", ":"))
+        .collect();
 
     let text = nmcli(&[
-        "-t", "-f", "IN-USE,SIGNAL,SECURITY,SSID", "dev", "wifi", "list", "--rescan", "no",
+        "-t",
+        "-f",
+        "IN-USE,SIGNAL,SECURITY,SSID",
+        "dev",
+        "wifi",
+        "list",
+        "--rescan",
+        "no",
     ])?;
 
     let mut aps: Vec<AccessPoint> = Vec::new();
@@ -95,7 +115,11 @@ fn read_list() -> Option<WifiList> {
     }
     aps.sort_by(|a, b| b.active.cmp(&a.active).then(b.signal.cmp(&a.signal)));
 
-    Some(WifiList { enabled, saved, aps })
+    Some(WifiList {
+        enabled,
+        saved,
+        aps,
+    })
 }
 
 pub fn watch_list() -> Receiver<WifiList> {
@@ -134,9 +158,19 @@ pub fn connect(ssid: &str, password: Option<&str>) {
 
 /// Sambung ke jaringan yang profilnya sudah tersimpan.
 pub fn connect_saved(ssid: &str) {
-    run_detached(vec!["connection".into(), "up".into(), "id".into(), ssid.to_string()]);
+    run_detached(vec![
+        "connection".into(),
+        "up".into(),
+        "id".into(),
+        ssid.to_string(),
+    ]);
 }
 
 pub fn disconnect(ssid: &str) {
-    run_detached(vec!["connection".into(), "down".into(), "id".into(), ssid.to_string()]);
+    run_detached(vec![
+        "connection".into(),
+        "down".into(),
+        "id".into(),
+        ssid.to_string(),
+    ]);
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 pub fn poll<T>(interval: Duration, read: impl Fn() -> Option<T> + Send + 'static) -> Receiver<T>
 where
-T: Clone + PartialEq + Send + 'static,
+    T: Clone + PartialEq + Send + 'static,
 {
     let (tx, rx) = async_channel::unbounded();
     std::thread::spawn(move || {

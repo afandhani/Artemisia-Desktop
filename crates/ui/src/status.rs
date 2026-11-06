@@ -1,7 +1,7 @@
 use gtk4::prelude::*;
-use gtk4::{glib, Box as GtkBox, GestureClick, Label, Orientation};
+use gtk4::{Box as GtkBox, GestureClick, Label, Orientation, glib};
 use services::network::NetworkState;
-use services::{battery, network, volume, Receiver};
+use services::{Receiver, battery, network, volume};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Item {
@@ -28,7 +28,7 @@ pub fn widget(items: &[Item], on_click: impl Fn() + 'static) -> GtkBox {
             }),
             Item::Network => bind(network::watch(), |s| match s {
                 NetworkState::Wifi { ssid, signal } => format!("WIFI {ssid} {signal}%"),
-                                  NetworkState::Disconnected => "WIFI off".to_string(),
+                NetworkState::Disconnected => "WIFI off".to_string(),
             }),
         };
         container.append(&label);

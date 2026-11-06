@@ -1,6 +1,6 @@
-use crate::panel_util::{clear, dim, header, SwitchSync};
+use crate::panel_util::{SwitchSync, clear, dim, header};
 use gtk4::prelude::*;
-use gtk4::{glib, Box as GtkBox, Button, Label, Orientation, ScrolledWindow};
+use gtk4::{Box as GtkBox, Button, Label, Orientation, ScrolledWindow, glib};
 use services::bluetooth::{self, BtState};
 
 pub fn widget() -> GtkBox {

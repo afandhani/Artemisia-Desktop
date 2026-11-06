@@ -1,3 +1,24 @@
 [workspace]
-resolver = "2"
-members = ["crates/app", "crates/services", "crates/ui", "crates/mango"]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# Isi dengan versi Rust yang pasti bisa build proyek ini (lihat `rustc --version`),
+# lalu hapus tanda '#'. Contoh format: rust-version = "1.90"
+rust-version = "1.99.1"
+
+[workspace.dependencies]
+# pihak ketiga
+gtk4 = "0.11.5"
+gtk4-layer-shell = "0.8.1"
+async-channel = "2.5.0"
+chrono = "0.4.45"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+# crate internal
+mango = { path = "crates/mango" }
+services = { path = "crates/services" }
+ui = { path = "crates/ui" }

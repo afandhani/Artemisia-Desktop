@@ -1,8 +1,9 @@
 [package]
 name = "services"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+# rust-version.workspace = true
 
 [dependencies]
-async-channel = "2.5.0"
-chrono = "0.4.45"
+async-channel.workspace = true
+chrono.workspace = true

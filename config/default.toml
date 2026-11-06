@@ -1,0 +1,11 @@
+[bar]
+position = "top"
+left   = ["launcher", "tags"]
+center = ["clock"]
+right  = ["status"]
+
+[clock]
+format = "%H:%M"
+
+[status]
+items = ["network", "volume", "battery"]
